@@ -204,9 +204,7 @@ const Navbar = () => {
               Bhukkad Bites
             </h2>
             <Login
-              onLoginSuccess={handleLoginSuccess}
-              onClose={() => navigate('/')}
-            />
+              onLoginSuccess={handleLoginSuccess} onClose={() => navigate('/')} />
           </div>
         </div>
       )}
