@@ -8,11 +8,19 @@ const SpecialOffer = () => {
   const initialData = [...cardData, ...additionalData];
   const { addToCart, updateQuantity, removeFromCart, cartItems } = useCart();
 
+ 
+  const getNumericPrice = (price) => {
+    if (typeof price === 'string') {
+      return parseFloat(price.replace(/[^\d.]/g, ''));
+    }
+    return price;
+  };
+
   const handleAdd = (item) => {
     addToCart({
       ...item,
       name: item.title,
-      price: parseFloat(item.price.replace('₹', '')),
+      price: getNumericPrice(item.price),
     }, 1);
   };
 
@@ -50,6 +58,7 @@ const SpecialOffer = () => {
           {(showAll ? initialData : initialData.slice(0, 4)).map((item) => {
             const cartItem = cartItems.find(ci => ci.id === item.id);
             const quantity = cartItem ? cartItem.quantity : 0;
+            const price = getNumericPrice(item.price);
 
             return (
               <div
@@ -78,7 +87,8 @@ const SpecialOffer = () => {
                 <p className="text-sm text-gray-300 mb-4">{item.description}</p>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-amber-400">₹{item.price}</span>
+                
+                  <span className="text-lg font-bold text-amber-400">₹{price}</span>
 
                   {quantity > 0 ? (
                     <div className="flex items-center gap-2">
