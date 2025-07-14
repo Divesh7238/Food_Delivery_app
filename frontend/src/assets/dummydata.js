@@ -1,6 +1,6 @@
 import { FaShippingFast, FaLeaf, FaHeart } from 'react-icons/fa';
 import { FaBolt, FaRegClock, FaCalendarCheck, FaFire } from 'react-icons/fa';
-import { FaInstagram, FaXTwitter, FaYoutube, FaLinkedin } from 'react-icons/fa6';
+import { FaInstagram, FaYoutube, FaLinkedin, FaGithub } from 'react-icons/fa6';
 import { FiUser, FiSmartphone, FiMail, FiHome } from 'react-icons/fi';
 import { FaUtensils } from 'react-icons/fa';
 import { GiChefToque, GiFoodTruck } from 'react-icons/gi';
@@ -156,12 +156,6 @@ export const socialIcons = [
         label: 'Instagram',
     },
     {
-        icon: FaXTwitter,
-        link: 'https://x.com/HexagonDService?t=Vv5ReZAIbXONqkq_O0ksWQ&s=09',
-        color: '#000000',
-        label: 'X',
-    },
-    {
         icon: FaYoutube,
         link: 'https://youtube.com/@hexagondigitalservices?si=UnBt0AHI-ChN5Mze',
         color: '#FF0000',
@@ -172,6 +166,12 @@ export const socialIcons = [
         link: 'https://www.linkedin.com/in/divesh-singh-a29b4a323/',
         color: '#0077B5',
         label: 'LinkedIn',
+    },
+    {
+        icon: FaGithub,
+        link: 'https://github.com/Divesh7238',
+        color: '#171515',
+        label: 'GitHub',
     },
 ];
 
