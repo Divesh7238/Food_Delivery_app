@@ -1,9 +1,10 @@
 import { FaShippingFast, FaLeaf, FaHeart } from 'react-icons/fa';
 import { FaBolt, FaRegClock, FaCalendarCheck, FaFire } from 'react-icons/fa';
-import { FaFacebook, FaInstagram, FaXTwitter, FaYoutube } from 'react-icons/fa6';
+import { FaInstagram, FaXTwitter, FaYoutube, FaLinkedin } from 'react-icons/fa6';
 import { FiUser, FiSmartphone, FiMail, FiHome } from 'react-icons/fi';
 import { FaUtensils } from 'react-icons/fa';
 import { GiChefToque, GiFoodTruck } from 'react-icons/gi';
+
 import IA1 from './IA1.png';
 import IA2 from './IA2.png';
 import IA3 from './IA3.png';
@@ -33,7 +34,7 @@ export const features = [
         id: 1,
         title: "Instant Delivery",
         text: "30-minute delivery guarantee in metro areas",
-        icon: FaShippingFast, // store the component reference
+        icon: FaShippingFast,
         img: IA1,
     },
     {
@@ -89,7 +90,6 @@ export const teamMembers = [
         social: {
             twitter: "https://x.com/?lang=en",
             instagram: "https://www.instagram.com/",
-            facebook: "https://www.facebook.com/",
             linkedin: "https://www.linkedin.com/",
         },
     },
@@ -102,7 +102,6 @@ export const teamMembers = [
         social: {
             twitter: "https://x.com/?lang=en",
             instagram: "https://www.instagram.com/",
-            facebook: "https://www.facebook.com/",
             linkedin: "https://www.linkedin.com/",
         },
     },
@@ -115,7 +114,6 @@ export const teamMembers = [
         social: {
             twitter: "https://x.com/?lang=en",
             instagram: "https://www.instagram.com/",
-            facebook: "https://www.facebook.com/",
             linkedin: "https://www.linkedin.com/",
         },
     },
@@ -141,6 +139,7 @@ export const cardData = [
     { id: 3, title: 'Desi Chowmein', rating: 4.2, hearts: 85, description: 'Spicy Asian noodles with a local twist', image: DesiChowmein, price: '₹60' },
     { id: 4, title: 'Chicken Chargha', rating: 4.8, hearts: 285, description: 'Crispy golden fried whole chicken', image: ChickenChargha, special: true, price: '₹200' },
 ];
+
 export const additionalData = [
     { id: 5, title: 'Paneer Tikka', rating: 4.8, hearts: 210, description: 'Cottage cheese marinated in spices', image: PaneerTikka, popular: true, price: '₹220' },
     { id: 6, title: 'Masala Dosa', rating: 4.5, hearts: 165, description: 'Crispy rice crepe with potato filling', image: MasalaDosa, price: '₹180' },
@@ -148,15 +147,35 @@ export const additionalData = [
     { id: 8, title: 'Gulab Jamun', rating: 4.9, hearts: 275, description: 'Golden dumplings in rose syrup', image: GulabJamun, special: true, price: '₹30' },
 ];
 
-// FOOTER 
+// ✅ UPDATED FOOTER SOCIAL ICONS
 export const socialIcons = [
-    { icon: FaFacebook, link: 'https://www.facebook.com/share/1DjbwhdR4z/', color: '#3b5998', label: 'Facebook' },
-    { icon: FaInstagram, link: 'https://www.instagram.com/hexagondigitalservices?igsh=MW1nanQ2eXIycnRkZQ==', color: '#E1306C', label: 'Instagram' },
-    { icon: FaXTwitter, link: 'https://x.com/HexagonDService?t=Vv5ReZAIbXONqkq_O0ksWQ&s=09', color: '#000', label: 'X' },
-    { icon: FaYoutube, link: 'https://youtube.com/@hexagondigitalservices?si=UnBt0AHI-ChN5Mze', color: '#FF0000', label: 'Youtube' },
+    {
+        icon: FaInstagram,
+        link: 'https://www.instagram.com/divesh.raghuvanshii/',
+        color: '#E1306C',
+        label: 'Instagram',
+    },
+    {
+        icon: FaXTwitter,
+        link: 'https://x.com/HexagonDService?t=Vv5ReZAIbXONqkq_O0ksWQ&s=09',
+        color: '#000000',
+        label: 'X',
+    },
+    {
+        icon: FaYoutube,
+        link: 'https://youtube.com/@hexagondigitalservices?si=UnBt0AHI-ChN5Mze',
+        color: '#FF0000',
+        label: 'Youtube',
+    },
+    {
+        icon: FaLinkedin,
+        link: 'https://www.linkedin.com/in/divesh-singh-a29b4a323/',
+        color: '#0077B5',
+        label: 'LinkedIn',
+    },
 ];
 
-// LOGIN 
+// LOGIN
 export const inputBase = "w-full rounded-lg bg-[#2D1B0E] text-amber-100 placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-600";
 export const iconClass = "absolute top-1/2 transform -translate-y-1/2 left-3 text-amber-400";
 
