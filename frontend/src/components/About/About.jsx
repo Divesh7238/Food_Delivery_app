@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { features, stats } from '../../assets/dummydata';
+import { features, stats, teamMembers } from '../../assets/dummydata';
+import { FaTwitter, FaInstagram, FaFacebookF, FaLinkedinIn } from 'react-icons/fa';
 
 const About = () => {
   const [hoveredStat, setHoveredStat] = useState(null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a120b] via-[#3c2a21] to-[#1a120b] text-amber-50 overflow-hidden relative">
+      {/* Intro Section */}
       <motion.section
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -22,6 +24,7 @@ const About = () => {
         </div>
       </motion.section>
 
+      {/* Features Section */}
       <section className="py-12 px-4 md:px-8 relative">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
           {features.map((f, i) => {
@@ -62,6 +65,7 @@ const About = () => {
         </div>
       </section>
 
+      {/* Stats Section */}
       <section className="py-16 px-4 md:px-8 bg-gradient-to-br from-[#1a120b] to-[#3c2a21]/90">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((s, i) => {
@@ -129,13 +133,78 @@ const About = () => {
                           scale: hoveredStat === i ? 0.9 : 0.8
                         }}
                       />
-                     
                     </div>
                   </div>
                 </motion.div>
               </motion.div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Team Members Section */}
+      <section className="py-16 px-4 md:px-8 relative">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            className="text-4xl font-serif sm:text-5xl md:text-6xl font-bold text-center mb-12 text-amber-100"
+          >
+            Meet Our <span className="text-amber-500">Culinary Artists</span>
+          </motion.h2>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12">
+            {teamMembers.map((m, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '0px 0px -100px 0px' }}
+                transition={{ delay: i * 0.1 }}
+                className="relative h-full bg-[#3c2a21]/90 backdrop-blur-lg rounded-3xl overflow-hidden border-2 border-amber-600/30 hover:border-amber-500 transition-all duration-500 shadow hover:shadow-amber-500/20"
+              >
+                <div className="relative h-64 sm:h-72 md:h-96 overflow-hidden">
+                  <motion.img
+                    src={m.img}
+                    alt={m.name}
+                    className="w-full h-full object-cover"
+                    initial={{ scale: 1 }}
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                <div className="p-8 text-center flex flex-col h-[calc(100%-24rem)]">
+                  <div className="mb-4">
+                    <h3 className="text-3xl font-bold mb-2 text-amber-100">{m.name}</h3>
+                    <p className="text-amber-500 text-lg font-medium font-cursive">{m.role}</p>
+                  </div>
+                  <p className="text-amber-100/80 text-lg font-cursive flex-grow">{m.bio}</p>
+                  <motion.div
+                    className="flex justify-center gap-4 pt-6"
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                  >
+                    {Object.entries(m.social).map(([platform, url]) => (
+                      <a
+                        key={platform}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-amber-400 hover:text-amber-500 transition-colors"
+                      >
+                        {{
+                          twitter: <FaTwitter className="w-6 h-6" />,
+                          instagram: <FaInstagram className="w-6 h-6" />,
+                          facebook: <FaFacebookF className="w-6 h-6" />,
+                          linkedin: <FaLinkedinIn className="w-6 h-6" />,
+                        }[platform.toLowerCase()]}
+                      </a>
+                    ))}
+                  </motion.div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
     </div>
