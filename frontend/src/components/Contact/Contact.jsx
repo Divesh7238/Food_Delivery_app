@@ -58,7 +58,7 @@ const Contact = () => {
                 <h3 className="ml-4 text-amber-100 text-xl font-semibold">Our Headquarter</h3>
               </div>
               <div className="pl-12 relative z-10">
-                <p className="text-amber-100 font-light text-lg">Lucknow, UP</p>
+                <p className="text-amber-100 font-light text-lg">PrayagRaj, UP</p>
               </div>
             </div>
 
@@ -73,7 +73,7 @@ const Contact = () => {
               <div className="pl-12 relative space-y-2 z-10">
                 <p className="text-amber-100 font-light flex items-center">
                   <FiGlobe className='text-green-400 text-xl mr-2' />
-                  +91 8299431275
+                  +91 7238036254
                 </p>
               </div>
             </div>
@@ -87,7 +87,7 @@ const Contact = () => {
                 <h3 className="ml-4 text-orange-100 text-xl font-semibold">Email Address</h3>
               </div>
               <div className="pl-12 relative z-10">
-                <p className="text-amber-100 font-light text-lg">hexagonservices@gmail.com</p>
+                <p className="text-amber-100 font-light text-lg">divesh.singh_cs23@gla.ac.in</p>
               </div>
             </div>
           </div>
@@ -96,7 +96,7 @@ const Contact = () => {
           <div className="relative bg-white/5 backdrop-blur-lg rounded-2xl p-6 shadow-2xl animate-slide-in-right border border-amber-500/30 hover:border-amber-500/50">
             <div className="absolute -top-4 -right-4 w-12 h-12 bg-amber-500/30 rounded-full animate-ping-slow" />
             <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-              {contactFormFields.map(({ label, name, type, placeholder, pattern, Icon }) => (
+              {contactFormFields.map(({ label, name, type, placeholder, pattern }) => (
                 <div key={name}>
                   <label className="block text-amber-100 text-sm font-medium mb-2">{label}</label>
                   <div className="relative">
