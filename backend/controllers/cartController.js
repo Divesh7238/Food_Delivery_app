@@ -23,12 +23,10 @@ export const addToCart = asyncHandler(async (req, res) => {
 
   if (cartItem) {
     cartItem.quantity = Math.max(1, cartItem.quantity + quantity)
-
     if (cartItem.quantity < 1) {
       await cartItem.remove()
       return res.json({ _id: cartItem._id.toString(), item: cartItem.item, quantity: 0 })
     }
-
     await cartItem.save()
     await cartItem.populate('item')
     return res.status(200).json({
