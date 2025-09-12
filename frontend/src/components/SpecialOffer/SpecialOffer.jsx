@@ -19,7 +19,7 @@ const SpecialOffer = () => {
       id: item.id,
       name: item.title,
       price: getNumericPrice(item.price),
-      image: item.image, // ✅ consistent
+      imageUrl: item.image, // ✅ imageUrl को image से असाइन किया गया
     };
     addToCart(normalized, 1);
   };

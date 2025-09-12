@@ -26,15 +26,15 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Invalid or empty items array' });
     }
 
-    const orderItems = items.map(({ item, name, price, imageUrl, quantity }) => {
-      const base = item || {};
+    const orderItems = items.map(o => {
       return {
         item: {
-          name: base.name || name || 'Unknown',
-          price: Number(base.price ?? price) || 0,
-          imageUrl: base.imageUrl || imageUrl || ''
+          _id: o.item._id,
+          name: o.item.name,
+          price: Number(o.item.price),
+          imageUrl: o.item.imageUrl
         },
-        quantity: Number(quantity) || 0
+        quantity: Number(o.quantity)
       };
     });
 
@@ -42,19 +42,22 @@ export const createOrder = async (req, res) => {
     let newOrder;
 
     if (paymentMethod === 'online') {
+      const lineItems = orderItems.map(o => ({
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: o.item.name,
+            images: [o.item.imageUrl]
+          },
+          unit_amount: Math.round(o.item.price * 100)
+        },
+        quantity: o.quantity
+      }));
+      
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'payment',
-        line_items: orderItems.map(o => ({
-          price_data: {
-            currency: 'inr',
-            product_data: {
-              name: o.item.name
-            },
-            unit_amount: Math.round(o.item.price * 100)
-          },
-          quantity: o.quantity
-        })),
+        line_items: lineItems,
         customer_email: email,
         success_url: `${process.env.FRONTEND_URL}/myorder/verify?success=true&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/checkout?payment_status=cancel`,
@@ -150,6 +153,15 @@ export const getOrders = async (req, res) => {
         item: i.item,
         quantity: i.quantity
       })),
+      firstName: o.firstName,
+      lastName: o.lastName,
+      email: o.email,
+      phone: o.phone,
+      address: o.address,
+      city: o.city,
+      zipCode: o.zipCode,
+      total: o.total,
+      paymentMethod: o.paymentMethod,
       createdAt: o.createdAt,
       paymentStatus: o.paymentStatus
     }));

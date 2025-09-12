@@ -115,7 +115,7 @@ const OurHomeMenu = () => {
                       </>
                     ) : (
                       <button
-                        onClick={() => addToCart({ ...item, id, imageUrl }, 1)} // ✅ FIXED
+                        onClick={() => addToCart({ ...item, id, imageUrl }, 1)} // ✅ Correctly passing imageUrl
                         className="bg-amber-300 hover:bg-amber-400 text-amber-900 font-bold py-1 px-3 rounded-full shadow"
                       >
                         Add to Cart

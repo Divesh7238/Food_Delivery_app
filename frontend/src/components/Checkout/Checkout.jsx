@@ -8,7 +8,7 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 const Input = ({ label, name, type = 'text', value, onChange }) => (
   <div>
-    <label className='block mb-1'>{label}</label>
+    <label className='block mb-1 text-amber-100'>{label}</label>
     <input type={type} name={name} value={value} onChange={onChange} required className='w-full bg-[#3a2b2b]/50 rounded-xl px-4 py-2' />
   </div>
 );
@@ -18,10 +18,10 @@ const PaymentSummary = ({ totalAmount }) => {
   const tax = Number((subtotal * 0.05).toFixed(2));
   const total = Number((subtotal + tax).toFixed(2));
   return (
-    <div className='space-y-2'>
-      <div className='flex justify-between'><span>Subtotal:</span><span>{subtotal.toFixed(2)}</span></div>
-      <div className='flex justify-between'><span>Tax (5%):</span><span>{tax.toFixed(2)}</span></div>
-      <div className='flex justify-between font-bold'><span>Total:</span><span>{total.toFixed(2)}</span></div>
+    <div className='space-y-2 text-amber-100'>
+      <div className='flex justify-between'><span>Subtotal:</span><span>₹{subtotal.toFixed(2)}</span></div>
+      <div className='flex justify-between'><span>Tax (5%):</span><span>₹{tax.toFixed(2)}</span></div>
+      <div className='flex justify-between font-bold'><span>Total:</span><span>₹{total.toFixed(2)}</span></div>
     </div>
   );
 };
@@ -42,28 +42,28 @@ const Checkout = () => {
   const token = localStorage.getItem('authToken');
   const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // handle return from payment gateway (optional)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const paymentStatus = params.get('payment_status');
     const sessionId = params.get('session_id');
 
-    if (!paymentStatus) return;
-
-    setLoading(true);
     if (paymentStatus === 'success' && sessionId) {
-      axios.post(`${API_BASE}/api/orders/confirm`, { sessionId }, { headers: authHeaders })
-        .then(({ data }) => {
+      axios.get(`${API_BASE}/api/orders/confirm?session_id=${sessionId}`, { headers: authHeaders })
+        .then(() => {
           clearCart();
-          navigate('/myorder', { state: { order: data.order } });
+          navigate('/myorder', { replace: true });
         })
-        .catch(() => setError('Payment confirmation failed. Please contact support.'))
+        .catch((err) => {
+          console.error('Payment confirmation error:', err);
+          setError('Payment confirmation failed. Please contact support.');
+          clearCart(); // Clear cart even if confirmation fails
+        })
         .finally(() => setLoading(false));
-    } else {
-      setError('Payment was cancelled or failed. Please contact support.');
+    } else if (paymentStatus === 'cancel') {
+      setError('Payment was cancelled. Please try again.');
       setLoading(false);
     }
-  }, [location.search]); // eslint-disable-line
+  }, [location.search, navigate, clearCart, authHeaders]);
 
   const handleInputChange = e => {
     const { name, value } = e.target;
@@ -84,9 +84,9 @@ const Checkout = () => {
     const tax = Number((subtotal * 0.05).toFixed(2));
     const total = Number((subtotal + tax).toFixed(2));
 
-    // payload normalize for backend
     const itemsPayload = cartItems.map(ci => ({
       item: {
+        _id: ci.id,
         name: ci.name,
         price: ci.price,
         imageUrl: ci.imageUrl
@@ -100,21 +100,19 @@ const Checkout = () => {
       subtotal,
       tax,
       total,
-      paymentMethod: formData.paymentMethod
     };
 
     try {
       const { data } = await axios.post(`${API_BASE}/api/orders`, payload, { headers: authHeaders });
-      if (formData.paymentMethod === 'online') {
-        window.location.href = data.checkoutUrl; // redirect to Stripe/Razorpay page
+      if (formData.paymentMethod === 'online' && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
       } else {
         clearCart();
-        navigate('/myorder', { state: { order: data.order } });
+        navigate('/myorder');
       }
     } catch (err) {
       console.error('Order submission error:', err);
       setError(err.response?.data?.message || 'Failed to submit order');
-    } finally {
       setLoading(false);
     }
   };
@@ -130,7 +128,7 @@ const Checkout = () => {
 
         <form className='grid lg:grid-cols-2 gap-12' onSubmit={handleSubmit}>
           <div className='bg-[#4b3b3b]/80 p-6 rounded-3xl space-y-6'>
-            <h2 className='text-2xl font-bold'>Personal Information</h2>
+            <h2 className='text-2xl font-bold text-amber-100'>Personal Information</h2>
             <Input label='First Name' name='firstName' value={formData.firstName} onChange={handleInputChange} />
             <Input label='Last Name' name='lastName' value={formData.lastName} onChange={handleInputChange} />
             <Input label='Phone' name='phone' value={formData.phone} onChange={handleInputChange} />
@@ -141,9 +139,9 @@ const Checkout = () => {
           </div>
 
           <div className='bg-[#4b3b3b]/80 p-6 rounded-3xl space-y-6'>
-            <h2 className='text-2xl font-bold'>Payment Details</h2>
-            <label className='block mb-2'>Payment Method</label>
-            <select name='paymentMethod' value={formData.paymentMethod} onChange={handleInputChange} required className='w-full bg-[#3a2b2b]/50 rounded-xl px-4 py-3'>
+            <h2 className='text-2xl font-bold text-amber-100'>Payment Details</h2>
+            <label className='block mb-2 text-amber-100'>Payment Method</label>
+            <select name='paymentMethod' value={formData.paymentMethod} onChange={handleInputChange} required className='w-full bg-[#3a2b2b]/50 rounded-xl px-4 py-3 text-amber-100'>
               <option value=''>Select Method</option>
               <option value='cod'>Cash on Delivery</option>
               <option value='online'>Online Payment</option>

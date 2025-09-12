@@ -79,8 +79,9 @@ const AddItems = () => {
       setHoverRating(0);
       alert('Item added successfully!');
     } catch (err) {
-      console.error('Error uploading item:', err.response?.data || err.message);
-      alert('Error uploading item!');
+      // ✅ Improved error handling
+      console.error('Error uploading item:', err.response?.data?.message || err.message);
+      alert(`Error uploading item: ${err.response?.data?.message || 'Please check the console for details.'}`);
     }
   };
 

@@ -7,9 +7,9 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 const buildImageUrl = (path) => {
   if (!path) return '/fallback-image.png';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (path.startsWith('http')) return path;
   if (path.includes('uploads/')) return `${API_URL}/${path.replace(/^\/?/, '')}`;
-  return `${API_URL}/uploads/${path}`;
+  return new URL(`../../assets/${path}`, import.meta.url).href; // ✅ लोकल इमेज के लिए सही पाथ
 };
 
 const Cart = () => {

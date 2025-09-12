@@ -3,7 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../CartContext/CartContext';
 import { FaMinus, FaPlus, FaTrash, FaTimes } from 'react-icons/fa';
 
-const API_URL = 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+
+const buildImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${API_URL}/uploads/${path.replace(/^\/?uploads\//, '')}`;
+};
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -16,12 +22,6 @@ const CartPage = () => {
       navigate('/login');
     }
   }, [navigate]);
-
-  const buildImageUrl = (path) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `${API_URL}/uploads/${path.replace(/^\/?uploads\//, '')}`;
-  };
 
   return (
     <div className="min-h-screen overflow-x-hidden py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#1a120b] via-[#3c2a21] to-[#522b1d]">
@@ -60,6 +60,7 @@ const CartPage = () => {
                         src={imageSrc}
                         alt={item.name}
                         className="w-full h-full object-contain"
+                        onError={(e) => (e.currentTarget.src = '/fallback-image.png')}
                       />
                     </div>
 
@@ -112,8 +113,11 @@ const CartPage = () => {
                   Continue Shopping
                 </Link>
                 <div className="flex items-center gap-8">
-                  <h2 className="text-3xl font-dancingscript text-amber-100">Total: ₹{cartTotal}</h2>
-                  <button className="bg-amber-900/40 px-8 py-3 rounded-full font-cinzel uppercase tracking-wider hover:bg-amber-800/50 transition-all duration-300 text-amber-100 flex items-center gap-2 active:scale-95">
+                  <h2 className="text-3xl font-dancingscript text-amber-100">Total: ₹{cartTotal.toFixed(2)}</h2>
+                  <button
+                    onClick={() => navigate('/checkout')}
+                    className="bg-amber-900/40 px-8 py-3 rounded-full font-cinzel uppercase tracking-wider hover:bg-amber-800/50 transition-all duration-300 text-amber-100 flex items-center gap-2 active:scale-95"
+                  >
                     Checkout Now
                   </button>
                 </div>

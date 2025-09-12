@@ -100,8 +100,8 @@ const OurMenu = () => {
                       <button
                         onClick={() =>
                           addToCart({
-                            ...item,          // ✅ ensures image, name, price pass hota hai
-                            quantity: 1
+                            ...item,
+                            imageUrl: item.image, // ✅ imageUrl को image से असाइन किया गया
                           })
                         }
                         className="bg-amber-900/40 px-4 py-1.5 rounded-full text-xs uppercase sm:text-sm tracking-wider transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-amber-900/20 relative overflow-hidden border border-amber-800/50 font-semibold"
