@@ -3,20 +3,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { useCart } from '../../CartContext/CartContext';
-
-const API_BASE = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '../../config/api';
 
 const Input = ({ label, name, type = 'text', value, onChange }) => (
   <div>
     <label className='block mb-1 text-amber-100'>{label}</label>
-    <input type={type} name={name} value={value} onChange={onChange} required className='w-full bg-[#3a2b2b]/50 rounded-xl px-4 py-2' />
+    <input type={type} name={name} value={value} onChange={onChange} required className='w-full bg-[#3a2b3b]/50 rounded-xl px-4 py-2' />
   </div>
 );
 
-const PaymentSummary = ({ totalAmount }) => {
-  const subtotal = Number(totalAmount.toFixed(2));
-  const tax = Number((subtotal * 0.05).toFixed(2));
-  const total = Number((subtotal + tax).toFixed(2));
+const PaymentSummary = ({ subtotal, tax, total }) => {
   return (
     <div className='space-y-2 text-amber-100'>
       <div className='flex justify-between'><span>Subtotal:</span><span>₹{subtotal.toFixed(2)}</span></div>
@@ -39,16 +35,16 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem('authToken');
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+  const token = localStorage.getItem('token');
+  const authHeaders = token ? { token: token } : {};
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const paymentStatus = params.get('payment_status');
-    const sessionId = params.get('session_id');
+    const success = params.get('success');
+    const orderId = params.get('orderId');
 
-    if (paymentStatus === 'success' && sessionId) {
-      axios.get(`${API_BASE}/api/orders/confirm?session_id=${sessionId}`, { headers: authHeaders })
+    if (success === 'true' && orderId) {
+      axios.post(`${API_BASE_URL}/orders/confirm?session_id=${orderId}`, {}, { headers: authHeaders })
         .then(() => {
           clearCart();
           navigate('/myorder', { replace: true });
@@ -56,10 +52,10 @@ const Checkout = () => {
         .catch((err) => {
           console.error('Payment confirmation error:', err);
           setError('Payment confirmation failed. Please contact support.');
-          clearCart(); // Clear cart even if confirmation fails
+          clearCart();
         })
         .finally(() => setLoading(false));
-    } else if (paymentStatus === 'cancel') {
+    } else if (success === 'false') {
       setError('Payment was cancelled. Please try again.');
       setLoading(false);
     }
@@ -72,7 +68,7 @@ const Checkout = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (cartItems.length === 0) {
+    if (Object.keys(cartItems).length === 0) {
       setError('Your cart is empty.');
       return;
     }
@@ -83,15 +79,15 @@ const Checkout = () => {
     const subtotal = Number(cartTotal.toFixed(2));
     const tax = Number((subtotal * 0.05).toFixed(2));
     const total = Number((subtotal + tax).toFixed(2));
-
-    const itemsPayload = cartItems.map(ci => ({
+    
+    const itemsPayload = cartItems.map(item => ({
       item: {
-        _id: ci.id,
-        name: ci.name,
-        price: ci.price,
-        imageUrl: ci.imageUrl
+        _id: item.id,
+        name: item.name,
+        price: item.price,
+        imageUrl: item.imageUrl
       },
-      quantity: ci.quantity
+      quantity: item.quantity
     }));
 
     const payload = {
@@ -103,19 +99,29 @@ const Checkout = () => {
     };
 
     try {
-      const { data } = await axios.post(`${API_BASE}/api/orders`, payload, { headers: authHeaders });
-      if (formData.paymentMethod === 'online' && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      const { data } = await axios.post(`${API_BASE_URL}/orders`, payload, { headers: authHeaders });
+
+      if (data.success) {
+        if (formData.paymentMethod === 'online' && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          clearCart();
+          navigate('/myorder');
+        }
       } else {
-        clearCart();
-        navigate('/myorder');
+        setError(data.message || 'Failed to submit order');
       }
     } catch (err) {
       console.error('Order submission error:', err);
       setError(err.response?.data?.message || 'Failed to submit order');
+    } finally {
       setLoading(false);
     }
   };
+
+  const subtotal = Number(cartTotal.toFixed(2));
+  const tax = Number((subtotal * 0.05).toFixed(2));
+  const total = Number((subtotal + tax).toFixed(2));
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-[#1a1212] to-[#2a1e1e] text-white py-16 px-4'>
@@ -139,14 +145,14 @@ const Checkout = () => {
           </div>
 
           <div className='bg-[#4b3b3b]/80 p-6 rounded-3xl space-y-6'>
-            <h2 className='text-2xl font-bold text-amber-100'>Payment Details</h2>
+            <h2 className='text-2xl font-bold text-amber-100'>Payment Details </h2>
             <label className='block mb-2 text-amber-100'>Payment Method</label>
-            <select name='paymentMethod' value={formData.paymentMethod} onChange={handleInputChange} required className='w-full bg-[#3a2b2b]/50 rounded-xl px-4 py-3 text-amber-100'>
+            <select name='paymentMethod' value={formData.paymentMethod} onChange={handleInputChange} required className='w-full bg-[#3a2b3b]/50 rounded-xl px-4 py-3 text-amber-100'>
               <option value=''>Select Method</option>
               <option value='cod'>Cash on Delivery</option>
               <option value='online'>Online Payment</option>
             </select>
-            <PaymentSummary totalAmount={cartTotal} />
+            <PaymentSummary subtotal={subtotal} tax={tax} total={total} />
             {error && <p className='text-red-400 mt-2'>{error}</p>}
             <button type='submit' disabled={loading} className='w-full bg-gradient-to-r from-red-600 to-amber-600 py-3 rounded-xl font-bold flex justify-center items-center'>
               <span className='mr-2'>{loading ? 'Processing...' : 'Complete Order'}</span>
@@ -157,7 +163,7 @@ const Checkout = () => {
         <div className='space-y-4 mt-10'>
           <h3 className='text-lg font-semibold text-amber-100'>Your Order Items</h3>
           {cartItems.map((ci) => (
-            <div key={ci.cartItemId} className='flex justify-between items-center bg-[#3a2b2b] p-3 rounded-lg'>
+            <div key={ci.cartItemId} className='flex justify-between items-center bg-[#3a2b3b] p-3 rounded-lg'>
               <div className='flex-1'>
                 <span className='text-amber-100'>{ci.name}</span>
               </div>

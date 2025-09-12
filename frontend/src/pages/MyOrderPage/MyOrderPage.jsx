@@ -2,26 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiClock, FiTruck, FiCheckCircle, FiUser, FiMapPin, FiBox } from 'react-icons/fi';
 import axios from 'axios';
-
-const API_URL = 'http://localhost:4000';
+import { API_BASE_URL } from '../../config/api'; // Correct import from api.js
 
 const buildImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  if (path.includes('uploads')) return `${API_URL}/${path.replace(/^\/?/, '')}`;
-  return `${API_URL}/uploads/${path}`;
+  if (path.includes('uploads')) return `${API_BASE_URL}/${path.replace(/^\/?/, '')}`;
+  return `${API_BASE_URL}/uploads/${path}`;
 };
 
-const MyOrder = () => {
+const MyOrderPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const authToken = localStorage.getItem('authToken');
+  const authToken = localStorage.getItem('token'); // Use 'token' from localStorage as per your login logic
 
   useEffect(() => {
-    if (!authToken) {
+    if (!authToken || !user) {
       setError('You must be logged in to view your orders.');
       setLoading(false);
       return;
@@ -29,13 +28,17 @@ const MyOrder = () => {
 
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/orders`, {
+        const response = await axios.get(`${API_BASE_URL}/orders/user/${user._id}`, { // Corrected endpoint and user id usage
           headers: {
-            Authorization: `Bearer ${authToken}`,
+            Authorization: `Bearer ${authToken}`, // Use Authorization header with Bearer token
           },
         });
 
-        const formattedOrders = response.data.map(order => ({
+        if (!response.data.success || !Array.isArray(response.data.data)) {
+          throw new Error('Invalid data format from server.');
+        }
+
+        const formattedOrders = response.data.data.map(order => ({
           ...order,
           items: order.items?.map(entry => ({
             ...entry,
@@ -254,4 +257,4 @@ const MyOrder = () => {
   );
 };
 
-export default MyOrder;
+export default MyOrderPage;

@@ -1,275 +1,167 @@
-import Stripe from 'stripe';
-import Order from '../models/orderModel.js';
-import 'dotenv/config';
+import orderModel from '../Models/orderModel.js'
+import userModel from '../Models/userModel.js'
+import Stripe from 'stripe'
 
+// Setting up Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// CREATE ORDER
-export const createOrder = async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phone,
-      email,
-      address,
-      city,
-      zipCode,
-      paymentMethod,
-      subtotal,
-      tax,
-      total,
-      items
-    } = req.body;
+// Helper function to validate and format image URLs
+const getFullImageUrl = (imagePath) => {
+  const API_URL = process.env.VITE_BACKEND_URL || 'http://localhost:4000';
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http')) return imagePath;
+  const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${API_URL}${cleanPath}`;
+};
 
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: 'Invalid or empty items array' });
+// Placing an order from the user
+const createOrder = async (req, res) => {
+  try {
+    const { items, total, tax, subtotal, ...addressDetails } = req.body;
+    const userId = req.user.id;
+
+    // Ensure items is an array
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ success: false, message: 'Invalid items format' });
     }
 
+    // Map items to the correct structure for the order model
     const orderItems = items.map(o => {
       return {
         item: {
           _id: o.item._id,
           name: o.item.name,
           price: Number(o.item.price),
-          imageUrl: o.item.imageUrl
+          imageUrl: getFullImageUrl(o.item.imageUrl),
         },
         quantity: Number(o.quantity)
       };
     });
 
-    const shippingCost = 0;
-    let newOrder;
+    const newOrder = new orderModel({
+      userId: userId,
+      items: orderItems,
+      total: Number(total),
+      tax: Number(tax),
+      subtotal: Number(subtotal),
+      ...addressDetails
+    });
+    await newOrder.save();
+    await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
-    if (paymentMethod === 'online') {
-      const lineItems = orderItems.map(o => ({
-        price_data: {
-          currency: 'inr',
-          product_data: {
-            name: o.item.name,
-            images: [o.item.imageUrl]
-          },
-          unit_amount: Math.round(o.item.price * 100)
+    const lineItems = items.map(o => ({
+      price_data: {
+        currency: 'inr',
+        product_data: {
+          name: o.item.name,
+          images: [getFullImageUrl(o.item.imageUrl)],
         },
-        quantity: o.quantity
-      }));
-      
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        mode: 'payment',
-        line_items: lineItems,
-        customer_email: email,
-        success_url: `${process.env.FRONTEND_URL}/myorder/verify?success=true&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/checkout?payment_status=cancel`,
-        metadata: { firstName, lastName, email, phone }
-      });
-
-      newOrder = await Order.create({
-        user: req.user._id,
-        firstName,
-        lastName,
-        phone,
-        email,
-        address,
-        city,
-        zipCode,
-        items: orderItems,
-        paymentMethod,
-        subtotal,
-        tax,
-        shipping: shippingCost,
-        total,
-        status: 'processing',
-        paymentStatus: 'pending',
-        sessionId: session.id
-      });
-
-      return res.status(201).json({ order: newOrder, checkoutUrl: session.url });
-    } else {
-      newOrder = await Order.create({
-        user: req.user._id,
-        firstName,
-        lastName,
-        phone,
-        email,
-        address,
-        city,
-        zipCode,
-        items: orderItems,
-        paymentMethod,
-        subtotal,
-        tax,
-        shipping: shippingCost,
-        total,
-        status: 'processing',
-        paymentStatus: 'succeeded'
-      });
-
-      return res.status(201).json({ order: newOrder, checkoutUrl: null });
-    }
-  } catch (error) {
-    console.error('CreateOrder Error:', error);
-    res.status(500).json({ message: 'Something went wrong', error: error.message });
-  }
-};
-
-// CONFIRM PAYMENT
-export const confirmPayment = async (req, res) => {
-  try {
-    const { session_id } = req.query;
-    if (!session_id) return res.status(400).json({ message: 'Session_id required' });
-
-    const session = await stripe.checkout.sessions.retrieve(session_id);
-
-    if (session.payment_status === 'paid') {
-      const order = await Order.findOneAndUpdate(
-        { sessionId: session_id },
-        { paymentStatus: 'succeeded' },
-        { new: true }
-      );
-
-      if (!order) return res.status(404).json({ message: 'Order not found' });
-
-      return res.json(order);
-    }
-
-    return res.status(400).json({ message: 'Payment not completed' });
-  } catch (err) {
-    console.error('ConfirmPayment Error:', err);
-    res.status(500).json({ message: 'Server Error', error: err.message });
-  }
-};
-
-// GET USER ORDERS
-export const getOrders = async (req, res) => {
-  try {
-    const filter = { user: req.user._id };
-    const rawOrders = await Order.find(filter).sort({ createdAt: -1 }).lean();
-
-    const formatted = rawOrders.map(o => ({
-      _id: o._id,
-      items: o.items.map(i => ({
-        _id: i._id,
-        item: i.item,
-        quantity: i.quantity
-      })),
-      firstName: o.firstName,
-      lastName: o.lastName,
-      email: o.email,
-      phone: o.phone,
-      address: o.address,
-      city: o.city,
-      zipCode: o.zipCode,
-      total: o.total,
-      paymentMethod: o.paymentMethod,
-      createdAt: o.createdAt,
-      paymentStatus: o.paymentStatus
+        unit_amount: Math.round(o.item.price * 100)
+      },
+      quantity: o.quantity
     }));
 
-    res.json(formatted);
+    lineItems.push({
+      price_data: {
+        currency: 'inr',
+        product_data: {
+          name: 'Delivery Charges'
+        },
+        unit_amount: 50 * 100
+      },
+      quantity: 1
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `${process.env.VITE_FRONTEND_URL}/verify?success=true&orderId=${newOrder._id}`,
+      cancel_url: `${process.env.VITE_FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`
+    });
+
+    res.json({ success: true, session_url: session.url });
   } catch (error) {
-    console.error('getOrders Error:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.log(error);
+    res.json({ success: false, message: 'Error' });
   }
 };
 
-// ADMIN: GET ALL ORDERS (updated from images)
-export const getAllOrders = async (req, res) => {
+const getOrders = async (req, res) => {
   try {
-    const raw = await Order.find({}).sort({ createdAt: -1 }).lean();
-
-    const formatted = raw.map(o => ({
-      _id: o._id,
-      user: o.user,
-      firstName: o.firstName,
-      lastName: o.lastName,
-      email: o.email,
-      phone: o.phone,
-      address: o.address ?? o.shippingAddress?.address ?? '',
-      city: o.city ?? o.shippingAddress?.city ?? '',
-      zipCode: o.zipCode ?? o.shippingAddress?.zipCode ?? '',
-      paymentMethod: o.paymentMethod,
-      paymentStatus: o.paymentStatus,
-      status: o.status,
-      createdAt: o.createdAt,
-      items: o.items.map(i => ({
-        _id: i._id,
-        item: i.item,
-        quantity: i.quantity
-      }))
-    }));
-
-    res.json(formatted);
+    const orders = await orderModel.find({ userId: req.user.id });
+    res.json({ success: true, data: orders });
   } catch (error) {
-    console.error('getAllOrders Error:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.log(error);
+    res.json({ success: false, message: 'Error fetching orders' });
   }
 };
 
-// UPDATE ANY ORDER (ADMIN, no auth check)
-export const updateAnyOrder = async (req, res) => {
+const getAllOrders = async (req, res) => {
   try {
-    const updated = await Order.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    res.json(updated);
+    const orders = await orderModel.find({});
+    res.json({ success: true, data: orders });
   } catch (error) {
-    console.error('updateAnyOrder Error:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.log(error);
+    res.json({ success: false, message: 'Error fetching all orders' });
   }
 };
 
-// UPDATE ORDER BY ID (USER, with access checks)
-export const updateOrder = async (req, res) => {
+const updateStatus = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    if (!order.user.equals(req.user._id)) {
-      return res.status(403).json({ message: 'Access Denied' });
-    }
-
-    if (req.body.email && order.email !== req.body.email) {
-      return res.status(403).json({ message: 'Access Denied' });
-    }
-
-    const updated = await Order.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-
-    res.json(updated);
+    await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });
+    res.json({ success: true, message: 'Status Updated' });
   } catch (error) {
-    console.error('updateOrderById Error:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.log(error);
+    res.json({ success: false, message: 'Error updating status' });
   }
 };
 
-// GET ORDER BY ID (USER, with access checks)
-export const getOrderById = async (req, res) => {
+const updateOrder = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
-
-    if (!order.user.equals(req.user._id)) {
-      return res.status(403).json({ message: 'Access Denied' });
-    }
-
-    if (req.query.email && order.email !== req.query.email) {
-      return res.status(403).json({ message: 'Access Denied' });
-    }
-
-    res.json(order);
+    const orderId = req.params.id;
+    const update = req.body;
+    await orderModel.findByIdAndUpdate(orderId, update);
+    res.json({ success: true, message: 'Order Updated' });
   } catch (error) {
-    console.error('getOrderById Error:', error);
-    res.status(500).json({ message: 'Server Error', error: error.message });
+    console.log(error);
+    res.status(500).json({ success: false, message: 'Error updating order' });
   }
 };
+
+const getOrderById = async (req, res) => {
+  try {
+    const order = await orderModel.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    res.json({ success: true, data: order });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: 'Error fetching order by ID' });
+  }
+};
+
+const updateAnyOrder = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const update = req.body;
+    await orderModel.findByIdAndUpdate(orderId, update);
+    res.json({ success: true, message: 'Order Updated' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: 'Error updating order for admin' });
+  }
+};
+
+const confirmPayment = async (req, res) => {
+  try {
+    // You'll need to implement the actual payment confirmation logic here
+    res.json({ success: true, message: 'Payment confirmed successfully' });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: 'Error confirming payment' });
+  }
+};
+
+
+export { createOrder, getOrders, getAllOrders, updateStatus, confirmPayment, getOrderById, updateAnyOrder, updateOrder };

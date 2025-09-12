@@ -1,22 +1,18 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
-const authMiddleware = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  const token = req.cookies?.token ||
-    (authHeader && authHeader.startsWith('Bearer ') && authHeader.split(' ')[1]);
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Token Missing' });
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { _id: decoded.id, email: decoded.email };
-    next();
-  } catch (err) {
-    const message = err?.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid Token';
-    res.status(403).json({ success: false, message });
-  }
+const authMiddleware = async (req, res, next) => {
+    const { token } = req.headers;
+    if (!token) {
+        return res.json({ success: false, message: "Not Authorized Login Again" });
+    }
+    try {
+        const token_decode = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = { id: token_decode.id }; // Attach user ID to request object
+        next();
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error" });
+    }
 };
 
 export default authMiddleware;
