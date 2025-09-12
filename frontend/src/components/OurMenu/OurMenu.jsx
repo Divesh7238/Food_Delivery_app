@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useCart } from '../../CartContext/CartContext';
 import { dummyMenuData } from '../../assets/OmDD';
 import { FaMinus, FaPlus } from 'react-icons/fa';
-
 import './OurMenu.css';
 
 const categories = ['Breakfast', 'Lunch', 'Dinner', 'Mexican', 'Italian', 'Desserts', 'Drinks'];
@@ -10,18 +9,19 @@ const categories = ['Breakfast', 'Lunch', 'Dinner', 'Mexican', 'Italian', 'Desse
 const OurMenu = () => {
   const [activeCategory, setActiveCategory] = useState(categories[0]);
   const displayItems = (dummyMenuData[activeCategory] || []).slice(0, 12);
-  const { cartItems, addToCart, removeFromCart } = useCart();
+  const { cartItems, addToCart, removeFromCart, updateQuantity } = useCart();
 
-  const getQuantity = (id) => cartItems.find((i) => i.id === id)?.quantity || 0;
+  const getCartItem = (id) => cartItems.find((i) => i.id === id);
+  const getQuantity = (id) => getCartItem(id)?.quantity || 0;
 
   return (
     <div className="bg-gradient-to-br from-[#1a120b] via-[#2a1e14] to-[#3e2b1d] min-h-screen py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-amber-200 via-amber-300 to-amber-200">
-          <span className="font-dancingscript block text-5xl md:text-7xl sm:text-6xl mb-2">
+          <span className="block text-5xl md:text-7xl sm:text-6xl mb-2 font-extrabold tracking-wide text-amber-100">
             Our Exquisite Menu
           </span>
-          <span className="block text-xl sm:text-2xl md:text-3xl font-cinzel mt-4 text-amber-100/80">
+          <span className="block text-xl sm:text-2xl md:text-3xl mt-4 text-amber-100/80 font-semibold tracking-wider">
             A Symphony of Flavours
           </span>
         </h2>
@@ -31,7 +31,7 @@ const OurMenu = () => {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 sm:px-6 py-2 rounded-full border-2 transition-all duration-300 transform font-cinzel text-sm sm:text-lg tracking-widest backdrop-blur-sm
+              className={`px-4 sm:px-6 py-2 rounded-full border-2 transition-all duration-300 transform text-sm sm:text-lg tracking-widest backdrop-blur-sm font-semibold
                 ${
                   activeCategory === cat
                     ? 'bg-gradient-to-r from-amber-900/80 to-amber-700/80 border-amber-800 scale-105 shadow-xl text-amber-100'
@@ -45,7 +45,9 @@ const OurMenu = () => {
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
           {displayItems.map((item, i) => {
-            const quantity = getQuantity(item.id);
+            const cartItem = getCartItem(item.id);
+            const quantity = cartItem?.quantity || 0;
+
             return (
               <div
                 key={item.id}
@@ -57,11 +59,15 @@ const OurMenu = () => {
                 </div>
 
                 <div className="p-4 sm:p-6 flex flex-col flex-grow">
-                  <h3 className="text-xl sm:text-2xl mb-2 font-dancingscript text-amber-100 transition-colors">{item.name}</h3>
-                  <p className="text-amber-100/80 text-xs sm:text-sm mb-4 font-cinzel leading-relaxed">{item.description}</p>
+                  <h3 className="text-xl sm:text-2xl mb-2 font-semibold text-amber-100 tracking-wide">
+                    {item.name}
+                  </h3>
+                  <p className="text-amber-100/80 text-xs sm:text-sm mb-4 font-cinzel leading-relaxed">
+                    {item.description}
+                  </p>
                   <div className="mt-auto flex items-center gap-4 justify-between">
                     <div className="bg-amber-100/10 backdrop-blur-sm px-3 py-1 rounded-2xl shadow-lg">
-                      <span className="text-xl font-bold text-amber-300 font-dancingscript">
+                      <span className="text-xl font-bold text-amber-300">
                         ₹{item.price}
                       </span>
                     </div>
@@ -74,9 +80,9 @@ const OurMenu = () => {
                           className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center hover:bg-amber-800/50 transition-colors"
                           onClick={() => {
                             if (quantity > 1) {
-                              addToCart(item, -1);
+                              updateQuantity(cartItem.cartItemId, quantity - 1);
                             } else {
-                              removeFromCart(item.id);
+                              removeFromCart(cartItem.cartItemId);
                             }
                           }}
                         >
@@ -85,15 +91,20 @@ const OurMenu = () => {
                         <span className="w-8 text-center text-amber-100">{quantity}</span>
                         <button
                           className="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center hover:bg-amber-800/50 transition-colors"
-                          onClick={() => addToCart(item, 1)}
+                          onClick={() => updateQuantity(cartItem.cartItemId, quantity + 1)}
                         >
                           <FaPlus className="text-amber-100" />
                         </button>
                       </>
                     ) : (
                       <button
-                        onClick={() => addToCart(item, 1)}
-                        className="bg-amber-900/40 px-4 py-1.5 rounded-full font-cinzel text-xs uppercase sm:text-sm tracking-wider transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-amber-900/20 relative overflow-hidden border border-amber-800/50"
+                        onClick={() =>
+                          addToCart({
+                            ...item,          // ✅ ensures image, name, price pass hota hai
+                            quantity: 1
+                          })
+                        }
+                        className="bg-amber-900/40 px-4 py-1.5 rounded-full text-xs uppercase sm:text-sm tracking-wider transition-transform duration-300 hover:scale-110 hover:shadow-lg hover:shadow-amber-900/20 relative overflow-hidden border border-amber-800/50 font-semibold"
                       >
                         <span className="relative z-10 text-xs text-black">Add to Cart</span>
                       </button>

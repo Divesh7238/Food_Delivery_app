@@ -59,7 +59,7 @@ const AddItems = () => {
         }
       });
 
-      await axios.post('http://localhost:4000/api/items', payload, {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/items`, payload, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

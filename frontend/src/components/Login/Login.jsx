@@ -1,67 +1,87 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FaCheckCircle, FaUser, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaUserPlus } from "react-icons/fa";
-import { iconClass } from "../../assets/dummyData";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './Login.css';
 
-const Login = ({ handleLoginSuccess, onClose }) => {
-const [showToast, setShowToast] = useState(false);
-const [showPassword, setShowPassword] = useState(false);
-const [formData, setFormData] = useState({ username: "", password: "", rememberMe: false });
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-useEffect(() => {
-const stored = localStorage.getItem("loginData");
-if (stored) setFormData(JSON.parse(stored));
-}, []);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await fetch('http://localhost:4000/api/user/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        localStorage.setItem('authToken', data.token);
+        navigate('/');
+      } else {
+        setError(data.message || 'Invalid credentials');
+      }
+    } catch {
+      setError('Login failed. Please try again.');
+    }
+  };
 
-const handleSubmit = (e) => {
-e.preventDefault();
-formData.rememberMe ? localStorage.setItem("loginData", JSON.stringify(formData)) : localStorage.removeItem("loginData");
-setShowToast(true);
-setTimeout(() => setShowToast(false), 3000);
-if (handleLoginSuccess) handleLoginSuccess();
-};
-
-const handleChange = ({ target: { name, value, type, checked } }) => {
-setFormData((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
-};
-
-const toggleShowPassword = () => setShowPassword((prev) => !prev);
-
-return (
-<div className="space-y-6 relative">
-<div className={`fixed top-4 right-4 z-50 transition-all duration-300 ${showToast ? "translate-y-0 opacity-100" : "-translate-y-20 opacity-0"}`}>
-<div className="bg-green-600 text-white px-4 py-3 rounded-md shadow-lg flex items-center gap-2 text-sm">
-<FaCheckCircle className="flex-shrink-0" />
-<span>Login Successful</span>
-</div>
-</div>
-<form onSubmit={handleSubmit} className="space-y-6">
-<div className="relative">
-<FaUser className={iconClass} />
-<input type="text" name="username" placeholder="Username" value={formData.username} onChange={handleChange} className="pl-10 pr-4 py-3 border rounded w-full focus:outline-none" />
-</div>
-<div className="relative">
-<FaLock className={iconClass} />
-<input type={showPassword ? "text" : "password"} name="password" placeholder="Password" value={formData.password} onChange={handleChange} className="pl-10 pr-4 py-3 border rounded w-full focus:outline-none" />
-<button type="button" onClick={toggleShowPassword} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-amber-400">
-{showPassword ? <FaEyeSlash /> : <FaEye />}
-</button>
-</div>
-<label className="flex items-center">
-<input type="checkbox" name="rememberMe" checked={formData.rememberMe} onChange={handleChange} className="focus:ring-amber-600 h-5 w-5 text-amber-600 bg-[#2D1B0E] border-amber-400 rounded" />
-<span className="ml-2 text-amber-100 text-sm">Remember me</span>
-</label>
-<button type="submit" className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-600 text-[#2D1B0E] font-bold rounded flex items-center justify-center gap-2 hover:scale-105 transition-transform">
-Sign In <FaArrowRight />
-</button>
-</form>
-<div className="text-center">
-<Link to="/signup" onClick={onClose} className="inline-flex items-center gap-2 text-amber-400 hover:text-amber-600 transition-colors">
-<FaUserPlus /> Create New Account
-</Link>
-</div>
-</div>
-);
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#1a120b] p-4">
+      <div className="w-full max-w-md bg-gradient-to-br from-[#2D1D8E] to-[#4a372a] p-8 rounded-xl shadow-lg border-4 border-amber-700/30 transform transition-all duration-300 hover:shadow-2xl">
+        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent mb-6 hover:scale-105 transition-transform">
+          Login to Bhukkad Bites
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            autoComplete="username"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg bg-[#2D1D8E] text-amber-100 placeholder-amber-400 focus:ring-2 focus:ring-amber-600 transition-all duration-200 hover:scale-[1.02]"
+            required
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            autoComplete="current-password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg bg-[#2D1D8E] text-amber-100 placeholder-amber-400 focus:ring-2 focus:ring-amber-600 transition-all duration-200 hover:scale-[1.02]"
+            required
+          />
+          <div className="flex items-center justify-between">
+            <label className="flex items-center text-amber-200 text-sm">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+                className="mr-2 accent-amber-500"
+              />
+              Remember me
+            </label>
+            <Link to="/signup" className="text-amber-400 hover:text-amber-600 text-sm transition-all duration-300">
+              Create Account
+            </Link>
+          </div>
+          {error && <div className="login-error">{error}</div>}
+          <button
+            type="submit"
+            className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-600 text-white font-bold rounded-lg hover:scale-105 transition-transform duration-300 hover:shadow-lg"
+          >
+            Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

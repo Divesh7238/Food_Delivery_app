@@ -1,7 +1,7 @@
 import { FaShippingFast, FaLeaf, FaHeart } from 'react-icons/fa';
 import { FaBolt, FaRegClock, FaCalendarCheck, FaFire } from 'react-icons/fa';
 import { FaInstagram, FaYoutube, FaLinkedin, FaGithub } from 'react-icons/fa6';
-import { FiUser, FiSmartphone, FiMail, FiHome } from 'react-icons/fi';
+import { FiUser, FiSmartphone, FiMail, FiHome, FiPhone, FiMapPin } from 'react-icons/fi';
 import { FaUtensils } from 'react-icons/fa';
 import { GiChefToque, GiFoodTruck } from 'react-icons/gi';
 
@@ -181,11 +181,11 @@ export const iconClass = "absolute top-1/2 transform -translate-y-1/2 left-3 tex
 
 // CONTACT
 export const contactFormFields = [
-    { label: 'Full Name', name: 'name', type: 'text', placeholder: 'Enter your full name', Icon: FiUser },
-    { label: 'Phone Number', name: 'phone', type: 'tel', placeholder: '+91 12345 67890', pattern: "[+]{0,1}[0-9]{10,13}", Icon: FiSmartphone },
-    { label: 'Email Address', name: 'email', type: 'email', placeholder: 'your.email@example.com', Icon: FiMail },
-    { label: 'Address', name: 'address', type: 'text', placeholder: 'Enter your delivery address', Icon: FiHome },
-    { label: 'Dish Name', name: 'dish', type: 'text', placeholder: 'Enter dish name (e.g., Butter Chicken)', Icon: FaUtensils },
+    { label: 'Name', name: 'name', type: 'text', placeholder: 'Your Name', icon: FiUser },
+    { label: 'Phone', name: 'phone', type: 'tel', placeholder: 'Your Phone', icon: FiPhone },
+    { label: 'Email', name: 'email', type: 'email', placeholder: 'Your Email', icon: FiMail },
+    { label: 'Address', name: 'address', type: 'text', placeholder: 'Your Address', icon: FiHome },
+    { label: 'Dish', name: 'dish', type: 'text', placeholder: 'Dish Name', icon: FiMapPin },
 ];
 
 // BANNER

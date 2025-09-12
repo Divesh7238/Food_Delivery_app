@@ -88,6 +88,7 @@ const Banner = () => {
                     alt={`Orbiting dish ${index + 1}`}
                     className="w-full h-full rounded-full border-4 border-amber-500/30 shadow-lg bg-amber-900/60 object-cover hover:scale-105 transition-transform duration-300"
                   />
+                  
                 </div>
               </div>
             ))}

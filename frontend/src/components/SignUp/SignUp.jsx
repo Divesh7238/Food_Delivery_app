@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { FaCheckCircle, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaEye, FaEyeSlash, FaArrowLeft, FaTimesCircle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const url = 'http://localhost:4000';
 
 const AwesomeToast = ({ message, icon }) => (
   <div className="animate-slide-in fixed bottom-6 right-6 flex items-center bg-gradient-to-br from-amber-500 to-amber-600 px-6 py-4 rounded-lg shadow-2xl border-2 border-amber-300/20">
@@ -10,15 +13,15 @@ const AwesomeToast = ({ message, icon }) => (
 );
 
 const SignUp = () => {
-  const [showToast, setShowToast] = useState(false);
+  const [showToast, setShowToast] = useState({ visible: false, message: '', icon: null });
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (showToast) {
+    if (showToast.visible && showToast.message === 'Sign Up Successful') {
       const timer = setTimeout(() => {
-        setShowToast(false);
+        setShowToast({ visible: false, message: '', icon: null });
         navigate('/login');
       }, 2000);
       return () => clearTimeout(timer);
@@ -31,15 +34,25 @@ const SignUp = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    console.log('Sign Up Data:', formData);
-    setShowToast(true);
+    try {
+      const res = await axios.post(`${url}/api/user/register`, formData);
+      if (res.data.success && res.data.token) {
+        localStorage.setItem('authToken', res.data.token);
+        setShowToast({ visible: true, message: 'Sign Up Successful', icon: <FaCheckCircle /> });
+        return;
+      }
+      throw new Error(res.data.message || 'Registration failed');
+    } catch (error) {
+      const msg = error.response?.data?.message || error.message || 'An error occurred during registration';
+      setShowToast({ visible: true, message: msg, icon: <FaTimesCircle /> });
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#1a120b] p-4">
-      {showToast && <AwesomeToast message="Sign Up Successful" icon={<FaCheckCircle />} />}
+      {showToast.visible && <AwesomeToast message={showToast.message} icon={showToast.icon} />}
       <div className="w-full max-w-md bg-gradient-to-br from-[#2D1D8E] to-[#4a372a] p-8 rounded-xl shadow-lg border-4 border-amber-700/30 transform transition-all duration-300 hover:shadow-2xl">
         <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent mb-6 hover:scale-105 transition-transform">
           Create Account
@@ -88,7 +101,6 @@ const SignUp = () => {
             Sign Up
           </button>
         </form>
-
         <div className="mt-6 text-center">
           <Link to="/login" className="group inline-flex items-center text-amber-400 hover:text-amber-600 transition-all duration-300">
             <FaArrowLeft className="mr-2 transform -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300" />

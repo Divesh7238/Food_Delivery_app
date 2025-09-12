@@ -1,0 +1,33 @@
+// Admin API Configuration
+export const API_BASE_URL = 'http://localhost:4000/api';
+
+// API Endpoints
+export const API_ENDPOINTS = {
+  // Items
+  items: `${API_BASE_URL}/items`,
+  item: (id) => `${API_BASE_URL}/items/${id}`,
+  addItem: `${API_BASE_URL}/items/add`,
+  updateItem: (id) => `${API_BASE_URL}/items/${id}`,
+  deleteItem: (id) => `${API_BASE_URL}/items/${id}`,
+  
+  // Orders
+  orders: `${API_BASE_URL}/orders`,
+  order: (id) => `${API_BASE_URL}/orders/${id}`,
+  updateOrderStatus: (id) => `${API_BASE_URL}/orders/${id}`,
+  
+  // Users
+  users: `${API_BASE_URL}/user`,
+  user: (id) => `${API_BASE_URL}/user/${id}`,
+  
+  // Admin Auth
+  adminLogin: `${API_BASE_URL}/user/admin/login`
+};
+
+// Default headers
+export const getAuthHeaders = () => {
+  const token = localStorage.getItem('adminToken');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` })
+  };
+};

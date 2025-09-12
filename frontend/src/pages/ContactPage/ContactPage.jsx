@@ -5,12 +5,10 @@ import Contact from '../../components/Contact/Contact.jsx'
 
 const ContactPage = () => {
   return (
-     <> 
-    <Navbar />
-    <Contact />
-
-    <Footer />
-    
+    <>
+      <Navbar />
+      <Contact />
+      <Footer />
     </>
   )
 }
