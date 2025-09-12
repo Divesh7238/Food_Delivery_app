@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiClock, FiTruck, FiCheckCircle, FiUser, FiMapPin, FiBox } from 'react-icons/fi';
 import axios from 'axios';
-import { API_BASE_URL } from '../../config/api'; /
+import { API_BASE_URL } from '../../config/api';
 
 const buildImageUrl = (path) => {
   if (!path) return '';
@@ -17,7 +17,7 @@ const MyOrderPage = () => {
   const [error, setError] = useState(null);
 
   const user = JSON.parse(localStorage.getItem('user'));
-  const authToken = localStorage.getItem('token'); // Use 'token' from localStorage as per your login logic
+  const authToken = localStorage.getItem('token');
 
   useEffect(() => {
     if (!authToken || !user) {

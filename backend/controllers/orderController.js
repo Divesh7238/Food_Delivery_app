@@ -1,5 +1,6 @@
 import orderModel from '../Models/orderModel.js'
 import userModel from '../Models/userModel.js'
+import mongoose from 'mongoose'
 import Stripe from 'stripe'
 
 // Setting up Stripe
@@ -29,7 +30,7 @@ const createOrder = async (req, res) => {
     const orderItems = items.map(o => {
       return {
         item: {
-          _id: o.item._id,
+          _id: mongoose.Types.ObjectId.isValid(o.item._id) ? o.item._id : new mongoose.Types.ObjectId(),
           name: o.item.name,
           price: Number(o.item.price),
           imageUrl: getFullImageUrl(o.item.imageUrl),
@@ -39,7 +40,7 @@ const createOrder = async (req, res) => {
     });
 
     const newOrder = new orderModel({
-      userId: userId,
+      user: userId,
       items: orderItems,
       total: Number(total),
       tax: Number(tax),
@@ -88,7 +89,7 @@ const createOrder = async (req, res) => {
 
 const getOrders = async (req, res) => {
   try {
-    const orders = await orderModel.find({ userId: req.user.id });
+    const orders = await orderModel.find({ user: req.user.id });
     res.json({ success: true, data: orders });
   } catch (error) {
     console.log(error);
@@ -155,7 +156,14 @@ const updateAnyOrder = async (req, res) => {
 
 const confirmPayment = async (req, res) => {
   try {
-    // You'll need to implement the actual payment confirmation logic here
+    const sessionId = req.query.session_id;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'Missing session_id' });
+    }
+
+    // Update order payment status to succeeded/completed
+    await orderModel.findByIdAndUpdate(sessionId, { paymentStatus: 'succeeded', status: 'completed' });
+
     res.json({ success: true, message: 'Payment confirmed successfully' });
   } catch (error) {
     console.log(error);

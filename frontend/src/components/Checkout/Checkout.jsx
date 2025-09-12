@@ -35,7 +35,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   const authHeaders = token ? { token: token } : {};
 
   useEffect(() => {
