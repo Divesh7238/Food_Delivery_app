@@ -1,12 +1,10 @@
-import orderModel from '../models/orderModel.js'
-import userModel from '../models/userModel.js'
-import mongoose from 'mongoose'
-import Stripe from 'stripe'
+import orderModel from '../models/orderModel.js';
+import userModel from '../models/userModel.js';
+import mongoose from 'mongoose';
+import Stripe from 'stripe';
 
-// Setting up Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Helper function to validate and format image URLs
 const getFullImageUrl = (imagePath) => {
   const API_URL = process.env.VITE_BACKEND_URL || 'http://localhost:4000';
   if (!imagePath) return '';
@@ -15,18 +13,15 @@ const getFullImageUrl = (imagePath) => {
   return `${API_URL}${cleanPath}`;
 };
 
-// Placing an order from the user
 const createOrder = async (req, res) => {
   try {
     const { items, total, tax, subtotal, ...addressDetails } = req.body;
     const userId = req.user.id;
 
-    // Ensure items is an array
     if (!Array.isArray(items)) {
       return res.status(400).json({ success: false, message: 'Invalid items format' });
     }
 
-    // Map items to the correct structure for the order model
     const orderItems = items.map(o => {
       return {
         item: {
@@ -77,10 +72,11 @@ const createOrder = async (req, res) => {
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.VITE_FRONTEND_URL}/verify?success=true&orderId=${newOrder._id}`,
-      cancel_url: `${process.env.VITE_FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`
+      cancel_url: `${process.env.VITE_FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`,
+      metadata: { orderId: newOrder._id.toString() },
     });
 
-    res.json({ success: true, session_url: session.url });
+    res.json({ success: true, checkoutUrl: session.url });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: 'Error' });
@@ -156,13 +152,19 @@ const updateAnyOrder = async (req, res) => {
 
 const confirmPayment = async (req, res) => {
   try {
-    const sessionId = req.query.session_id;
-    if (!sessionId) {
-      return res.status(400).json({ success: false, message: 'Missing session_id' });
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'Missing orderId' });
     }
 
-    // Update order payment status to succeeded/completed
-    await orderModel.findByIdAndUpdate(sessionId, { paymentStatus: 'succeeded', status: 'completed' });
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    order.paymentStatus = 'succeeded';
+    order.status = 'processing';
+    await order.save();
 
     res.json({ success: true, message: 'Payment confirmed successfully' });
   } catch (error) {
@@ -170,6 +172,5 @@ const confirmPayment = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error confirming payment' });
   }
 };
-
 
 export { createOrder, getOrders, getAllOrders, updateStatus, confirmPayment, getOrderById, updateAnyOrder, updateOrder };

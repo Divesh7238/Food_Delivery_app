@@ -8,7 +8,7 @@ const buildImageUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   if (path.includes('uploads')) return `${API_BASE_URL}/${path.replace(/^\/?/, '')}`;
-  return `${API_BASE_URL}/uploads/${path}`;
+  return `${API_BASE_URL}/uploads/${path.replace(/^\/?uploads\//, '')}`;
 };
 
 const MyOrderPage = () => {
@@ -16,11 +16,10 @@ const MyOrderPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const authToken = localStorage.getItem('token');
+  const authToken = localStorage.getItem('authToken');
 
   useEffect(() => {
-    if (!authToken || !user) {
+    if (!authToken) {
       setError('You must be logged in to view your orders.');
       setLoading(false);
       return;
@@ -28,14 +27,14 @@ const MyOrderPage = () => {
 
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/orders/user/${user._id}`, { // Corrected endpoint and user id usage
+        const response = await axios.get(`${API_BASE_URL}/orders`, {
           headers: {
-            Authorization: `Bearer ${authToken}`, // Use Authorization header with Bearer token
+            Authorization: `Bearer ${authToken}`,
           },
         });
 
-        if (!response.data.success || !Array.isArray(response.data.data)) {
-          throw new Error('Invalid data format from server.');
+        if (!response.data || !response.data.success || !Array.isArray(response.data.data)) {
+          throw new Error(response.data.message || 'Invalid data format from server.');
         }
 
         const formattedOrders = response.data.data.map(order => ({
@@ -147,7 +146,7 @@ const MyOrderPage = () => {
             <FiArrowLeft className="text-xl" />
             <span className="font-bold">Back to Home</span>
           </Link>
-          <span className="text-amber-400/70 text-sm">{user?.email}</span>
+          <span className="text-amber-400/70 text-sm">Welcome Back</span>
         </div>
 
         <div className="bg-[#403b3b]/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border-2 border-amber-500/20">

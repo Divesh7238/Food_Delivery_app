@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../../CartContext/CartContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Make sure to import axios
+import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
 
 const VerifyPaymentPage = () => {
   const { clearCart } = useCart();
@@ -15,19 +16,17 @@ const VerifyPaymentPage = () => {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const success = params.get('success');
-    const session_id = params.get('session_id');
+    const orderId = params.get('orderId');
 
-    // MISSING OR CANCELLED
-    if (success !== 'true' || !session_id) {
+    if (success !== 'true' || !orderId) {
       if (success === 'false') {
         navigate('/checkout', { replace: true });
       }
-      setStatusMsg('Payment failed but order placed for completion.');
+      setStatusMsg('Payment failed or was cancelled. Order is placed for completion.');
       return;
     }
 
-    // STRIPE SUCCESS=TRUE
-    axios.get(`http://localhost:4000/api/orders/confirm?session_id=${session_id}`, {
+    axios.post(`${API_BASE_URL}/orders/confirm`, { orderId }, {
       headers: authHeaders
     })
       .then(() => {
@@ -36,7 +35,7 @@ const VerifyPaymentPage = () => {
       })
       .catch(err => {
         console.error('Confirmation error:', err);
-        setStatusMsg('There was an error confirming payment.');
+        setStatusMsg('There was an error confirming payment. Please contact support.');
         clearCart();
       });
   }, [search, clearCart, navigate, authHeaders]);

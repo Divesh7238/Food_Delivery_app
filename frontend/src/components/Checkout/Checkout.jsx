@@ -36,7 +36,7 @@ const Checkout = () => {
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem('authToken');
-  const authHeaders = token ? { token: token } : {};
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
