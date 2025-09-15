@@ -1,5 +1,5 @@
-import orderModel from '../Models/orderModel.js'
-import userModel from '../Models/userModel.js'
+import orderModel from '../models/orderModel.js'
+import userModel from '../models/userModel.js'
 import mongoose from 'mongoose'
 import Stripe from 'stripe'
 
