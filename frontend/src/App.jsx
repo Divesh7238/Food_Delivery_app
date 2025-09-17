@@ -11,22 +11,11 @@ import VerifyPaymentPage from './pages/VerifyPaymentPage/VerifyPaymentPage';
 import CheckoutPage from './pages/CheckoutPage/CheckoutPage';
 import MyOrderPage from './pages/MyOrderPage/MyOrderPage';
 import Login from './components/Login/Login'; // Add this import
-import ThankYou from './pages/ThankYou';
+import ThankYou from './pages/ThankYou/ThankYou';
 import Cart from './components/Cart/Cart';
 import { CartProvider } from './CartContext/CartContext';
 
 const App = () => {
-  // Example add to cart function
-  const addToCart = (item) => {
-    setCart(prev => {
-      const exists = prev.find(i => i._id === item._id);
-      if (exists) {
-        return prev.map(i => i._id === item._id ? { ...i, qty: i.qty + 1 } : i);
-      }
-      return [...prev, { ...item, qty: 1 }];
-    });
-  };
-
   return (
     <CartProvider>
       <Routes>

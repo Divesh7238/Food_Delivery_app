@@ -12,24 +12,24 @@ const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
 
 // ✅ Safe Image URL Builder
 const buildImageUrl = (img) => {
-  if (!img) return "";
+  if (!img || typeof img !== 'string' || img.trim() === '') return '/fallback-image.png';
   if (img.startsWith("http")) return img;
   const clean = img.replace(/^\/?uploads\//, "");
   return `${API_BASE}/uploads/${clean}`;
 };
 
-// ✅ Reducer
+
 const cartReducer = (state, action) => {
   switch (action.type) {
     case "HYDRATE_CART":
       return (action.payload || []).map((ci) => {
-        const it = ci.item || ci; // handle nested or flat structure
+        const it = ci.item || ci; 
         const id = it._id || it.id;
         return {
           id,
           name: it.name,
           price: Number(it.price || 0),
-          imageUrl: buildImageUrl(it.imageUrl || it.image),
+          imageUrl: buildImageUrl(it.imageUrl || it.image) || '/fallback-image.png',
           cartItemId: ci._id || ci.cartItemId,
           quantity: Number(ci.quantity || 1),
           description: it.description || "",
@@ -51,7 +51,7 @@ const cartReducer = (state, action) => {
           id,
           name: item.name,
           price: Number(item.price || 0),
-          imageUrl: buildImageUrl(item.imageUrl || item.image),
+          imageUrl: buildImageUrl(item.imageUrl || item.image) || '/fallback-image.png',
           cartItemId: cartItemId || id,
           quantity: quantity || 1,
           description: item.description || "",
@@ -198,6 +198,10 @@ export const CartProvider = ({ children }) => {
       dispatch({ type: "REMOVE_ITEM", payload: { cartItemId } });
     } catch (err) {
       console.error("Remove from cart failed:", err);
+      // If 404, item not found on server, remove locally anyway
+      if (err.response?.status === 404) {
+        dispatch({ type: "REMOVE_ITEM", payload: { cartItemId } });
+      }
     }
   }, []);
 

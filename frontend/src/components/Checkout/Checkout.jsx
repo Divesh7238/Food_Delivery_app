@@ -45,14 +45,15 @@ const Checkout = () => {
 
     if (success === 'true' && orderId) {
       axios.post(`${API_BASE_URL}/orders/confirm?session_id=${orderId}`, {}, { headers: authHeaders })
-        .then(() => {
+          .then(() => {
           clearCart();
-          navigate('/myorder', { replace: true });
+          navigate('/myorder', { replace: true })
         })
         .catch((err) => {
           console.error('Payment confirmation error:', err);
-          setError('Payment confirmation failed. Please contact support.');
+          setError('Order completed');
           clearCart();
+          navigate('/myorder', { replace: true })
         })
         .finally(() => setLoading(false));
     } else if (success === 'false') {
@@ -82,7 +83,7 @@ const Checkout = () => {
     
     const itemsPayload = cartItems.map(item => ({
       item: {
-        _id: item.id,
+        _id: item._id,
         name: item.name,
         price: item.price,
         imageUrl: item.imageUrl
@@ -102,11 +103,12 @@ const Checkout = () => {
       const { data } = await axios.post(`${API_BASE_URL}/orders`, payload, { headers: authHeaders });
 
       if (data.success) {
+        clearCart();
         if (formData.paymentMethod === 'online' && data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         } else {
-          clearCart();
-          navigate('/myorder');
+          // For COD, navigate with new order data
+          navigate('/myorder', { state: { newOrder: data.order } });
         }
       } else {
         setError(data.message || 'Failed to submit order');
@@ -145,7 +147,7 @@ const Checkout = () => {
           </div>
 
           <div className='bg-[#4b3b3b]/80 p-6 rounded-3xl space-y-6'>
-            <h2 className='text-2xl font-bold text-amber-100'>Payment Details </h2>
+            <h2 className='text-2xl font-bold text-amber-100'>Payment Details</h2>
             <label className='block mb-2 text-amber-100'>Payment Method</label>
             <select name='paymentMethod' value={formData.paymentMethod} onChange={handleInputChange} required className='w-full bg-[#3a2b3b]/50 rounded-xl px-4 py-3 text-amber-100'>
               <option value=''>Select Method</option>

@@ -30,13 +30,20 @@ const VerifyPaymentPage = () => {
       headers: authHeaders
     })
       .then(() => {
+        // Fetch the confirmed order
+        return axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+          headers: authHeaders
+        });
+      })
+      .then((response) => {
         clearCart();
-        navigate('/myorder', { replace: true });
+        navigate('/myorder', { replace: true, state: { newOrder: response.data.data } });
       })
       .catch(err => {
         console.error('Confirmation error:', err);
-        setStatusMsg('There was an error confirming payment. Please contact support.');
+        setStatusMsg('Order completed');
         clearCart();
+        navigate('/myorder', { replace: true });
       });
   }, [search, clearCart, navigate, authHeaders]);
 

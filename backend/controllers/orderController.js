@@ -1,5 +1,4 @@
 import orderModel from '../models/orderModel.js';
-import userModel from '../models/userModel.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 
@@ -15,8 +14,8 @@ const getFullImageUrl = (imagePath) => {
 
 const createOrder = async (req, res) => {
   try {
-    const { items, total, tax, subtotal, ...addressDetails } = req.body;
-    const userId = req.user.id;
+    const { items, total, tax, subtotal, paymentMethod, ...addressDetails } = req.body;
+    const userId = req.user._id;
 
     if (!Array.isArray(items)) {
       return res.status(400).json({ success: false, message: 'Invalid items format' });
@@ -40,46 +39,56 @@ const createOrder = async (req, res) => {
       total: Number(total),
       tax: Number(tax),
       subtotal: Number(subtotal),
+      paymentMethod,
       ...addressDetails
     });
+
+    if (paymentMethod === 'cod') {
+      newOrder.paymentStatus = 'succeeded';
+    }
+
     await newOrder.save();
-    await userModel.findByIdAndUpdate(userId, { cartData: {} });
 
-    const lineItems = items.map(o => ({
-      price_data: {
-        currency: 'inr',
-        product_data: {
-          name: o.item.name,
-          images: [getFullImageUrl(o.item.imageUrl)],
+    if (paymentMethod === 'online') {
+      const lineItems = items.map(o => ({
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: o.item.name,
+            images: [getFullImageUrl(o.item.imageUrl)],
+          },
+          unit_amount: Math.round(o.item.price * 100)
         },
-        unit_amount: Math.round(o.item.price * 100)
-      },
-      quantity: o.quantity
-    }));
+        quantity: o.quantity
+      }));
 
-    lineItems.push({
-      price_data: {
-        currency: 'inr',
-        product_data: {
-          name: 'Delivery Charges'
+      lineItems.push({
+        price_data: {
+          currency: 'inr',
+          product_data: {
+            name: 'Delivery Charges'
+          },
+          unit_amount: 50 * 100
         },
-        unit_amount: 50 * 100
-      },
-      quantity: 1
-    });
+        quantity: 1
+      });
 
-    const session = await stripe.checkout.sessions.create({
-      line_items: lineItems,
-      mode: 'payment',
-      success_url: `${process.env.VITE_FRONTEND_URL}/verify?success=true&orderId=${newOrder._id}`,
-      cancel_url: `${process.env.VITE_FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`,
-      metadata: { orderId: newOrder._id.toString() },
-    });
+      const frontendUrl = process.env.VITE_FRONTEND_URL || 'http://localhost:5173';
+      const session = await stripe.checkout.sessions.create({
+        line_items: lineItems,
+        mode: 'payment',
+        success_url: `${frontendUrl}/verify?success=true&orderId=${newOrder._id}`,
+        cancel_url: `${frontendUrl}/verify?success=false&orderId=${newOrder._id}`,
+        metadata: { orderId: newOrder._id.toString() },
+      });
 
-    res.json({ success: true, checkoutUrl: session.url });
+      res.json({ success: true, checkoutUrl: session.url });
+    } else {
+      res.json({ success: true, order: newOrder });
+    }
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: 'Error' });
+    res.status(500).json({ success: false, message: error.message || 'Error creating order' });
   }
 };
 
@@ -95,7 +104,7 @@ const getOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await orderModel.find({});
+    const orders = await orderModel.find({}).populate('user', 'name phone email');
     res.json({ success: true, data: orders });
   } catch (error) {
     console.log(error);
@@ -117,6 +126,12 @@ const updateOrder = async (req, res) => {
   try {
     const orderId = req.params.id;
     const update = req.body;
+
+    // Optional: Validate cancellation reason if status is cancelled
+    if (update.status === 'cancelled' && !update.cancellationReason) {
+      return res.status(400).json({ success: false, message: 'Cancellation reason is required when cancelling an order' });
+    }
+
     await orderModel.findByIdAndUpdate(orderId, update);
     res.json({ success: true, message: 'Order Updated' });
   } catch (error) {

@@ -55,7 +55,7 @@ const Order = () => {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await axios.put(`http://localhost:4000/api/orders/getall/${orderId}`, {
+      await axios.put(`http://localhost:4000/api/orders/admin/${orderId}`, {
         status: newStatus,
       });
 
