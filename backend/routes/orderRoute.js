@@ -12,10 +12,10 @@ import authMiddleware from '../middleware/auth.js';
 
 const orderRouter = express.Router();
 
+orderRouter.use(authMiddleware);
+
 orderRouter.get('/getall', getAllOrders);
 orderRouter.put('/admin/:id', updateAnyOrder);
-
-orderRouter.use(authMiddleware);
 
 orderRouter.post('/', createOrder);
 orderRouter.get('/', getOrders);

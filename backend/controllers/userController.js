@@ -65,4 +65,46 @@ const registerUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser };
+const makeAdmin = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User not found" });
+    }
+    user.isAdmin = true;
+    await user.save();
+    res.json({ success: true, message: "User made admin" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Error" });
+  }
+};
+
+const adminLogin = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.json({ success: false, message: "User Doesn't Exist" });
+    }
+
+    if (!user.isAdmin) {
+      return res.json({ success: false, message: "Access Denied: Not an Admin" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.json({ success: false, message: "Invalid Credentials" });
+    }
+
+    const token = createToken(user._id);
+    res.json({ success: true, token });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: "Error" });
+  }
+};
+
+export { loginUser, registerUser, makeAdmin, adminLogin };

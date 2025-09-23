@@ -104,6 +104,9 @@ const getOrders = async (req, res) => {
 
 const getAllOrders = async (req, res) => {
   try {
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
     const orders = await orderModel.find({}).populate('user', 'name phone email');
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -155,13 +158,16 @@ const getOrderById = async (req, res) => {
 
 const updateAnyOrder = async (req, res) => {
   try {
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
     const orderId = req.params.id;
     const update = req.body;
     await orderModel.findByIdAndUpdate(orderId, update);
     res.json({ success: true, message: 'Order Updated' });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: 'Error updating order for admin' });
+    res.status(500).json({ success: false, message: 'Error updating order' });
   }
 };
 
