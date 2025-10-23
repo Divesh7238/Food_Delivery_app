@@ -1,3 +1,5 @@
+// File: backend/routes/orderRoute.js
+
 import express from 'express';
 import {
   confirmPayment,
@@ -5,22 +7,30 @@ import {
   getAllOrders,
   getOrderById,
   getOrders,
-  updateAnyOrder,
-  updateOrder
+  updateOrderAdmin, // ✅ FIX: updateOrderAdmin इंपोर्ट किया
+  updateOrder 
 } from '../controllers/orderController.js';
 import authMiddleware from '../middleware/auth.js';
 
 const orderRouter = express.Router();
 
+// Middleware to authenticate all routes in this router
 orderRouter.use(authMiddleware);
 
-orderRouter.get('/getall', getAllOrders);
-orderRouter.put('/admin/:id', updateAnyOrder);
+// Admin Routes (Admin-specific access and logic)
+// ऑर्डर्स Fetch करने के लिए: http://localhost:4000/api/orders/all
+orderRouter.get('/all', getAllOrders); 
+// ऑर्डर स्टेटस अपडेट करने के लिए: http://localhost:4000/api/orders/admin/:id
+orderRouter.put('/admin/:id', updateOrderAdmin); 
 
+// User Routes
 orderRouter.post('/', createOrder);
-orderRouter.get('/', getOrders);
+orderRouter.get('/', getOrders); // User-specific orders fetch
+
+// Payment & Confirmation
 orderRouter.post('/confirm', confirmPayment);
 orderRouter.get('/:id', getOrderById);
-orderRouter.put('/:id', updateOrder);
+// User-side route for cancelling/updating their own order
+orderRouter.put('/:id', updateOrder); 
 
 export default orderRouter;

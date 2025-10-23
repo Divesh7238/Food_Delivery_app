@@ -1,3 +1,5 @@
+// File: backend/controllers/orderController.js
+
 import orderModel from '../models/orderModel.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
@@ -9,7 +11,9 @@ const getFullImageUrl = (imagePath) => {
   if (!imagePath) return '';
   if (imagePath.startsWith('http')) return imagePath;
   const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${API_URL}${cleanPath}`;
+  // सुनिश्चित करें कि यह /uploads/ से शुरू हो
+  const finalPath = cleanPath.startsWith('/uploads') ? cleanPath : `/uploads${cleanPath}`;
+  return `${API_URL}${finalPath}`;
 };
 
 const createOrder = async (req, res) => {
@@ -35,12 +39,18 @@ const createOrder = async (req, res) => {
 
     const newOrder = new orderModel({
       user: userId,
+      email: addressDetails.email,
+      firstName: addressDetails.firstName,
+      lastName: addressDetails.lastName,
+      phone: addressDetails.phone,
+      address: addressDetails.address,
+      city: addressDetails.city,
+      zipCode: addressDetails.zipCode,
       items: orderItems,
       total: Number(total),
       tax: Number(tax),
       subtotal: Number(subtotal),
       paymentMethod,
-      ...addressDetails
     });
 
     if (paymentMethod === 'cod') {
@@ -50,7 +60,7 @@ const createOrder = async (req, res) => {
     await newOrder.save();
 
     if (paymentMethod === 'online') {
-      const lineItems = items.map(o => ({
+      const lineItems = orderItems.map(o => ({
         price_data: {
           currency: 'inr',
           product_data: {
@@ -77,10 +87,13 @@ const createOrder = async (req, res) => {
       const session = await stripe.checkout.sessions.create({
         line_items: lineItems,
         mode: 'payment',
-        success_url: `${frontendUrl}/verify?success=true&orderId=${newOrder._id}`,
-        cancel_url: `${frontendUrl}/verify?success=false&orderId=${newOrder._id}`,
+        success_url: `${frontendUrl}/myorder/verify?success=true&orderId=${newOrder._id}`,
+        cancel_url: `${frontendUrl}/myorder/verify?success=false&orderId=${newOrder._id}`,
         metadata: { orderId: newOrder._id.toString() },
       });
+
+      newOrder.sessionId = session.id;
+      await newOrder.save(); // Session ID सेव करने के लिए दोबारा सेव करें
 
       res.json({ success: true, checkoutUrl: session.url });
     } else {
@@ -94,34 +107,58 @@ const createOrder = async (req, res) => {
 
 const getOrders = async (req, res) => {
   try {
-    const orders = await orderModel.find({ user: req.user.id });
+    const orders = await orderModel.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json({ success: true, data: orders });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: 'Error fetching orders' });
+    res.status(500).json({ success: false, message: 'Error fetching orders' });
   }
 };
 
+// Admin: Get All Orders - FIX for 500 Internal Server Error
 const getAllOrders = async (req, res) => {
   try {
     if (!req.user || !req.user.isAdmin) {
       return res.status(403).json({ success: false, message: 'Admin access required' });
     }
-    const orders = await orderModel.find({}).populate('user', 'name phone email');
-    res.json({ success: true, data: orders });
+    // ✅ FIX: 'name' के बजाय 'username' का उपयोग किया गया
+    const orders = await orderModel.find({})
+        .populate('user', 'username email phone') 
+        .sort({ createdAt: -1 });
+    
+    // Admin frontend expects an array directly
+    res.json(orders); 
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: 'Error fetching all orders' });
+    res.status(500).json({ success: false, message: 'Error fetching all orders' });
   }
 };
 
-const updateStatus = async (req, res) => {
+
+// Admin: Update Order Status
+const updateOrderAdmin = async (req, res) => {
   try {
-    await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });
-    res.json({ success: true, message: 'Status Updated' });
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    const orderId = req.params.id;
+    const { status } = req.body;
+
+    const updateFields = { status };
+    if (status === 'delivered') {
+      updateFields.deliveredAt = new Date();
+    }
+
+    const updatedOrder = await orderModel.findByIdAndUpdate(orderId, updateFields, { new: true });
+
+    if (!updatedOrder) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    res.json({ success: true, message: 'Status Updated', order: updatedOrder });
   } catch (error) {
     console.log(error);
-    res.json({ success: false, message: 'Error updating status' });
+    res.status(500).json({ success: false, message: 'Error updating status' });
   }
 };
 
@@ -129,10 +166,21 @@ const updateOrder = async (req, res) => {
   try {
     const orderId = req.params.id;
     const update = req.body;
+    const order = await orderModel.findById(orderId);
 
-    // Optional: Validate cancellation reason if status is cancelled
+    if (!order || order.user.toString() !== req.user._id.toString()) {
+        return res.status(404).json({ success: false, message: 'Order not found or access denied' });
+    }
+
     if (update.status === 'cancelled' && !update.cancellationReason) {
       return res.status(400).json({ success: false, message: 'Cancellation reason is required when cancelling an order' });
+    }
+
+    if (update.status === 'cancelled') {
+        order.status = 'cancelled';
+        order.cancellationReason = update.cancellationReason;
+        await order.save();
+        return res.json({ success: true, message: 'Order cancelled successfully' });
     }
 
     await orderModel.findByIdAndUpdate(orderId, update);
@@ -142,6 +190,7 @@ const updateOrder = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error updating order' });
   }
 };
+
 
 const getOrderById = async (req, res) => {
   try {
@@ -153,21 +202,6 @@ const getOrderById = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: 'Error fetching order by ID' });
-  }
-};
-
-const updateAnyOrder = async (req, res) => {
-  try {
-    if (!req.user || !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
-    const orderId = req.params.id;
-    const update = req.body;
-    await orderModel.findByIdAndUpdate(orderId, update);
-    res.json({ success: true, message: 'Order Updated' });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: 'Error updating order' });
   }
 };
 
@@ -183,15 +217,35 @@ const confirmPayment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    order.paymentStatus = 'succeeded';
-    order.status = 'processing';
-    await order.save();
+    // Check Stripe session status
+    if (order.sessionId) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+      const session = await stripe.checkout.sessions.retrieve(order.sessionId);
+      if (session.payment_status === 'paid') {
+          order.paymentStatus = 'succeeded';
+          order.status = 'processing';
+          order.transactionId = session.payment_intent;
+          await order.save();
+          return res.json({ success: true, message: 'Payment confirmed successfully' });
+      }
+    }
 
-    res.json({ success: true, message: 'Payment confirmed successfully' });
+
+    // Fallback for COD/Unsuccessful online payments
+    if (order.paymentMethod === 'cod') {
+        order.paymentStatus = 'succeeded';
+        order.status = 'processing';
+        await order.save();
+        return res.json({ success: true, message: 'Payment confirmed successfully (COD/Fallback)' });
+    }
+
+    res.status(400).json({ success: false, message: 'Payment not yet succeeded' });
+
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: 'Error confirming payment' });
   }
 };
 
-export { createOrder, getOrders, getAllOrders, updateStatus, confirmPayment, getOrderById, updateAnyOrder, updateOrder };
+
+export { createOrder, getOrders, getAllOrders, updateOrderAdmin, confirmPayment, getOrderById, updateOrder };

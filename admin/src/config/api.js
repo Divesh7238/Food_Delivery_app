@@ -11,9 +11,10 @@ export const API_ENDPOINTS = {
   deleteItem: (id) => `${API_BASE_URL}/items/${id}`,
   
   // Orders
-  orders: `${API_BASE_URL}/orders`,
-  order: (id) => `${API_BASE_URL}/orders/${id}`,
-  updateOrderStatus: (id) => `${API_BASE_URL}/orders/${id}`,
+  // ✅ Updated for fetching all orders
+  allOrders: `${API_BASE_URL}/orders/all`, 
+  // ✅ Updated for admin order status update
+  updateOrderStatusAdmin: (id) => `${API_BASE_URL}/orders/admin/${id}`, 
   
   // Users
   users: `${API_BASE_URL}/user`,
