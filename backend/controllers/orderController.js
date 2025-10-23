@@ -1,6 +1,6 @@
 // File: backend/controllers/orderController.js
 
-import orderModel from '../models/orderModel.js';
+import orderModel from '../Models/orderModel.js';
 import mongoose from 'mongoose';
 import Stripe from 'stripe';
 
