@@ -17,8 +17,8 @@ const port = process.env.PORT || 4000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
 
-// ✅ Fix: Configure CORS to allow requests from the admin panel's port (5174) and deployed frontend
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://bhukkadme.onrender.com'];
+// ✅ Fix: Configure CORS to allow requests from the admin panel's port (5174) and deployed frontend and admin
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://bhukkadme.onrender.com', 'https://admin-bhukkad.onrender.com'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
