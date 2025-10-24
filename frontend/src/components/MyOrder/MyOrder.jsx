@@ -13,7 +13,7 @@ const MyOrder = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get('http://localhost:4000/api/orders', {
+        const response = await axios.get('https://bhukkadmebackend.onrender.com/api/orders', {
           params: { email: user?.email },
           headers: {
             Authorization: `Bearer ${localStorage.getItem('authToken')}`,

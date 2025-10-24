@@ -28,7 +28,7 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:4000/api/contact', formData);
+      await axios.post('https://bhukkadmebackend.onrender.com/api/contact', formData);
       toast.success('Your query has been submitted successfully!', {
         style: {
           border: '2px solid #f59e0b',
