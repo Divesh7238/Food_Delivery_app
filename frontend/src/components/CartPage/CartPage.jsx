@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../CartContext/CartContext';
 import { FaMinus, FaPlus, FaTrash, FaTimes } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://bhukkadmebackend.onrender.com';
 
 const buildImageUrl = (path) => {
   if (!path) return '';

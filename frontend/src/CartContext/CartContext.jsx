@@ -8,7 +8,7 @@ import React, {
 import axios from "axios";
 
 const CartContext = createContext();
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+const API_BASE = import.meta.env.VITE_BACKEND_URL || "https://bhukkadmebackend.onrender.com";
 
 // ✅ Safe Image URL Builder
 const buildImageUrl = (img) => {
