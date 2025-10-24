@@ -1,13 +1,13 @@
-// File: admin/src/components/List.jsx
+
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FiHeart, FiTrash2 } from 'react-icons/fi';
-// ✅ FIX: 'styles' को हटाकर मौजूद एक्सपोर्ट्स (layoutClasses और tableClasses) को इंपोर्ट किया गया
-import { layoutClasses, tableClasses } from '../assets/dummyadmin'; 
-import { API_ENDPOINTS, getAuthHeaders } from '../config/api'; // API config का उपयोग करें
 
-// API URL को .env से लें
+import { layoutClasses, tableClasses } from '../assets/dummyadmin'; 
+import { API_ENDPOINTS, getAuthHeaders } from '../config/api'; 
+
+
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000';
 
 const List = () => {
@@ -16,10 +16,10 @@ const List = () => {
 
   const fetchItems = async () => {
     try {
-      // API_ENDPOINTS का उपयोग करें, या सीधे URL को ठीक करें
+      
       const { data } = await axios.get(`${API_BASE_URL}/api/items`);
       
-      // इमेज URL को ठीक करें ताकि वे एडमिन पैनल में दिखें
+      
       const formattedItems = data.map(item => ({
         ...item,
         // सुनिश्चित करें कि इमेज URL में बेस URL ठीक से जोड़ा गया है
@@ -78,9 +78,9 @@ const List = () => {
             </div>
           )}
 
-          {/* ✅ FIX: styles.tableWrapper को tableClasses.wrapper से बदला गया */}
+    
           <div className={tableClasses.wrapper}>
-            {/* ✅ FIX: styles.table को tableClasses.table से बदला गया */}
+
             <table className={tableClasses.table}> 
               {/* ✅ FIX: styles.thead को tableClasses.headerRow को कंटेन करने के लिए बदला गया */}
               <thead>
@@ -97,34 +97,34 @@ const List = () => {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  // ✅ FIX: styles.tr को tableClasses.row से बदला गया
+       
                   <tr key={item._id} className={tableClasses.row}> 
-                    {/* ✅ FIX: styles.imgCell को tableClasses.cellBase से बदला गया */}
+                    
                     <td className={tableClasses.cellBase}> 
                       <img
                         src={item.imageUrl}
                         alt={item.name}
-                        // सीधे Tailwind क्लास का उपयोग करें या CSS को dummyadmin में परिभाषित करें
+                        
                         className="w-16 h-16 object-cover rounded-md shadow" 
                         onError={(e) => { e.target.onerror = null; e.target.src = '/fallback-image.png'; }}
                       />
                     </td>
-                    {/* ✅ FIX: styles.nameCell को tableClasses.cellBase से बदला गया */}
+                   
                     <td className={tableClasses.cellBase}> 
                       <div className="space-y-1 max-w-sm">
                         <p className="font-medium text-amber-100">{item.name}</p> 
                         <p className="text-xs text-amber-400/60 line-clamp-2">{item.description}</p>
                       </div>
                     </td>
-                    {/* ✅ FIX: styles.categoryCell को tableClasses.cellBase से बदला गया */}
+                    
                     <td className={tableClasses.cellBase}>{item.category}</td> 
-                    {/* ✅ FIX: styles.priceCell को tableClasses.cellBase से बदला गया */}
+                    
                     <td className={tableClasses.cellBase}>₹{Number(item.price).toFixed(2)}</td> 
-                    {/* ✅ FIX: styles.ratingCell को tableClasses.cellBase से बदला गया */}
+                 
                     <td className={tableClasses.cellBase}>
                       <div className="flex gap-1">{renderStars(item.rating || 0)}</div>
                     </td>
-                    {/* ✅ FIX: styles.heartsCell को tableClasses.cellBase से बदला गया */}
+                   
                     <td className={tableClasses.cellBase}> 
                       <div className="flex items-center gap-2 text-red-400">
                         <FiHeart className="text-xl" />
@@ -134,7 +134,7 @@ const List = () => {
                     <td className={`${tableClasses.cellBase} text-center`}>
                       <button
                         onClick={() => handleDelete(item._id)}
-                        // सीधे Tailwind क्लास का उपयोग करें
+                        
                         className="p-2 rounded-full bg-red-900/30 text-red-400 hover:bg-red-800/50 transition duration-150" 
                       >
                         <FiTrash2 className="text-xl" />
@@ -145,7 +145,6 @@ const List = () => {
               </tbody>
             </table>
             {items.length === 0 && (
-              // ✅ FIX: styles.emptyState को एक कस्टम क्लास से बदला गया
               <div className="text-center py-12 text-amber-100/60 text-xl">
                   No items found in the menu
               </div>
